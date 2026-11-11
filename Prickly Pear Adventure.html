@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prickly Pear Adventure</title>
+<style>
+:root{--bg:#fff4d6;--card:#ffffff;--ink:#3b2a1a;--pink:#e8478b;--green:#3aa655;--line:#f1c27a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a2118;--card:#3a2e22;--ink:#fff1d9;--line:#6b5436}}
+:root[data-theme="dark"]{--bg:#2a2118;--card:#3a2e22;--ink:#fff1d9;--line:#6b5436}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",system-ui,sans-serif;text-align:center;min-height:100vh;user-select:none;-webkit-user-select:none}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px}
+.stars{font-size:26px;font-weight:700}
+button{font-family:inherit;cursor:pointer;border:3px solid var(--line);background:var(--card);color:var(--ink);border-radius:22px;font-size:22px;padding:12px 18px}
+button:active{transform:scale(.95)}
+h1{margin:6px 0 2px;font-size:34px;color:var(--pink)}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;max-width:560px;margin:auto}
+.menu button{font-size:22px;padding:22px 8px;line-height:1.3}
+.menu .em{font-size:44px;display:block}
+.q{font-size:26px;margin:10px 14px}
+.big{font-size:96px;font-weight:700;margin:8px;color:var(--pink)}
+.opts{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:10px}
+.opts button{min-width:110px;min-height:110px;font-size:44px}
+.opts button svg{width:80px;height:80px}
+.bad{animation:sh .35s;background:#ffd0d0!important}
+.good{background:#c9f5c9!important;transform:scale(1.1)}
+@keyframes sh{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.mat{display:flex;gap:10px;justify-content:center;align-items:center;margin:10px;flex-wrap:wrap}
+.box{background:var(--card);border:4px solid var(--line);border-radius:20px;padding:10px;min-width:96px;min-height:96px;font-size:40px}
+.dots{font-size:24px;line-height:1.2;max-width:130px;margin:auto}
+.total{border-color:var(--green)}
+#scene{position:relative;width:min(92vw,560px);height:300px;margin:8px auto;border:4px solid var(--line);border-radius:22px;overflow:hidden;background:linear-gradient(#bfe6ff 60%,#e9c98f 60%);touch-action:manipulation}
+.st{position:absolute;width:62px;height:62px;transform:translate(-50%,-50%);pointer-events:none}
+.sw{display:inline-block;width:44px;height:44px;border-radius:50%;border:4px solid var(--line);margin:3px;padding:0}
+.sel{border-color:var(--ink)}
+.row{margin:4px}
+.row button{font-size:20px;padding:8px 12px}
+#cheer{position:fixed;left:0;right:0;top:35%;font-size:80px;pointer-events:none;opacity:0;transition:opacity .3s}
+</style>
+</head>
+<body>
+<div class="top"><button id="back" onclick="home()" style="visibility:hidden">⬅ Home</button><div class="stars" id="stars">⭐ 0</div><button onclick="sayCur()" aria-label="Hear it">🔊</button></div>
+<div id="main"></div>
+<div id="cheer"></div>
+<script>
+const $=s=>document.querySelector(s);
+let stars=0,curSay='';
+const sh=a=>a.slice().sort(()=>Math.random()-.5);
+const others=(a,x,n)=>sh(a.filter(v=>v!==x)).slice(0,n);
+function say(t){curSay=t;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.8;u.pitch=1.2;speechSynthesis.speak(u)}catch(e){}}
+function sayCur(){say(curSay)}
+const praise=['Great job!','You did it!','Super!','Awesome!','Yes!'];
+function win(){stars++;$('#stars').textContent='⭐ '+stars;const c=$('#cheer');c.textContent=['🌵','🎉','⭐','🌈'][stars%4];c.style.opacity=1;setTimeout(()=>c.style.opacity=0,700);if(stars%5===0)say('Wow! '+stars+' stars!')}
+const COLORS=['#e8478b','#f5b700','#2f80ed','#3aa655','#f2711c','#8e5bd1'];
+function shape(n,c,s){let b={circle:'<circle cx="50" cy="50" r="40"/>',square:'<rect x="15" y="15" width="70" height="70"/>',triangle:'<polygon points="50,10 90,85 10,85"/>',rectangle:'<rect x="6" y="28" width="88" height="44"/>',hexagon:'<polygon points="50,8 86,29 86,71 50,92 14,71 14,29"/>'}[n];return `<svg viewBox="0 0 100 100" fill="${c}" stroke="#3b2a1a" stroke-width="4">${b}</svg>`}
+const SHAPES=['circle','square','triangle','rectangle','hexagon'];
+function quiz(prompt,spoken,opts,next){
+ $('#main').innerHTML=`<div class="q">${prompt}</div><div class="opts" id="o"></div>`;
+ say(spoken);
+ sh(opts).forEach(o=>{const b=document.createElement('button');b.innerHTML=o.h;b.onclick=()=>{
+  if(o.ok){b.classList.add('good');win();say(praise[Math.floor(Math.random()*5)]);setTimeout(next,1100)}
+  else{b.classList.add('bad');say('Try again!');setTimeout(()=>b.classList.remove('bad'),400)}};$('#o').appendChild(b)});
+}
+function setMode(fn){$('#back').style.visibility='visible';fn()}
+function home(){speechSynthesis&&speechSynthesis.cancel();$('#back').style.visibility='hidden';
+ $('#main').innerHTML=`<h1>🌵 Prickly Pear Adventure</h1><div class="q">Pick a game!</div><div class="menu">
+ <button onclick="setMode(letters)"><span class="em">🔤</span>Letter Hunt</button>
+ <button onclick="setMode(words)"><span class="em">📖</span>Sight Words</button>
+ <button onclick="setMode(shapes)"><span class="em">🔷</span>Shape Hunt</button>
+ <button onclick="setMode(ppt)"><span class="em">🍐</span>Part Part Total</button>
+ <button onclick="setMode(story)" style="grid-column:span 2"><span class="em">🎨</span>Story Maker</button></div>`;say('Pick a game!')}
+const LET='tbfmnocIuagdserpjhklqvwx'.replace('I','i').split('');
+function letters(){const L=sh(LET)[0],o=others(LET,L,2);
+ $('#main').innerHTML='';
+ quiz(`Find the little letter that matches:<div class="big">${L.toUpperCase()}</div>`,'Find the little letter '+L,[{h:L,ok:1},...o.map(x=>({h:x}))],letters)}
+const WORDS=['a','the','like','who','this','is','he','she','they','my'];
+function words(){const w=sh(WORDS)[0],o=others(WORDS,w,2);
+ quiz(`Tap the word:<div class="big" style="font-size:60px">🔊 ${w}</div>`,'Tap the word '+w,[{h:w,ok:1},...o.map(x=>({h:x}))],words)}
+function shapes(){const n=sh(SHAPES)[0],o=others(SHAPES,n,2),c=()=>COLORS[Math.floor(Math.random()*6)];
+ quiz(`Which one is the <b>${n}</b>?`,'Which one is the '+n+'?',[{h:shape(n,c()),ok:1},...o.map(x=>({h:shape(x,c())}))],shapes)}
+function ppt(){const t=2+Math.floor(Math.random()*9),a=Math.floor(Math.random()*(t+1)),b=t-a;
+ const d=(n,c)=>'<div class="dots">'+(`<span style="color:${c}">●</span>`).repeat(n)+'</div>';
+ const nums=[...Array(11).keys()],o=others(nums,b,2);
+ quiz(`Make ${t}! Part + Part = Total<div class="mat"><div class="box">${a}${d(a,'#e8478b')}</div>+<div class="box">?</div>=<div class="box total">${t}${d(t,'#3aa655')}</div></div>How many are missing?`,`Make ${t}. We have ${a}. How many more?`,[{h:b,ok:1},...o.map(x=>({h:x}))],ppt)}
+let sShape='circle',sCol=COLORS[0];
+function story(){
+ const mats=[['🏖️ Sand','linear-gradient(#bfe6ff 60%,#e9c98f 60%)'],['🌿 Grass','linear-gradient(#bfe6ff 55%,#6fbf5f 55%)'],['🌊 Water','linear-gradient(#bfe6ff 30%,#4aa3e0 30%)'],['🪨 Rock','linear-gradient(#d9dde2 50%,#8d8f94 50%)']];
+ $('#main').innerHTML=`<div class="q">Use shapes, colors and Earth’s materials to tell a story!</div>
+ <div class="row" id="m"></div><div id="scene"></div><div class="row" id="s"></div><div class="row" id="c"></div>
+ <div class="row"><button onclick="$('#scene').innerHTML=''">🧹 Clear</button></div>`;
+ say('Tap the picture to build your story!');
+ mats.forEach(m=>{const b=document.createElement('button');b.textContent=m[0];b.onclick=()=>{$('#scene').style.background=m[1];say(m[0].split(' ')[1])};$('#m').appendChild(b)});
+ SHAPES.forEach(n=>{const b=document.createElement('button');b.innerHTML=shape(n,'#f5b700');b.firstChild.style.width='38px';b.onclick=()=>{sShape=n;say(n)};$('#s').appendChild(b)});
+ COLORS.forEach(c=>{const b=document.createElement('button');b.className='sw';b.style.background=c;b.onclick=()=>{sCol=c;document.querySelectorAll('.sw').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('#c').appendChild(b)});
+ $('#scene').onpointerdown=e=>{const r=$('#scene').getBoundingClientRect(),d=document.createElement('div');d.className='st';d.style.left=(e.clientX-r.left)+'px';d.style.top=(e.clientY-r.top)+'px';d.innerHTML=shape(sShape,sCol);d.firstChild.style.width='100%';$('#scene').appendChild(d);if($('#scene').children.length%6===0)win()};
+}
+home();
+</script>
+</body>
+</html>
